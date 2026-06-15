@@ -14,11 +14,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vietanh.dentalclinic.controllers.UserController
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(onLoginSuccess: () -> Unit) {
-    var email by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    
+    val coroutineScope = rememberCoroutineScope()
+    val userController = remember { UserController() }
 
     Box(
         modifier = Modifier
@@ -49,9 +56,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 )
 
                 OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Số điện thoại / Email") },
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text("Số điện thoại") },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -74,15 +81,55 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
-                    onClick = onLoginSuccess,
+                    onClick = {
+                        if (phone.isBlank() || password.isBlank()) {
+                            errorMessage = "Vui lòng nhập đầy đủ thông tin"
+                            return@Button
+                        }
+                        
+                        isLoading = true
+                        errorMessage = null
+                        
+                        coroutineScope.launch {
+                            val user = userController.login(phone, password)
+                            isLoading = false
+                            if (user != null) {
+                                if (user.roleId == 3) {
+                                    com.vietanh.dentalclinic.data.SessionManager.currentUserId = user.id
+                                    onLoginSuccess()
+                                } else {
+                                    errorMessage = "Tài khoản không có quyền truy cập (Yêu cầu Role 3)"
+                                }
+                            } else {
+                                errorMessage = "Sai số điện thoại hoặc mật khẩu"
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !isLoading
                 ) {
-                    Text("Đăng nhập", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Đăng nhập", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
-
+                
+                errorMessage?.let {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+                
                 Spacer(modifier = Modifier.height(16.dp))
 
                 TextButton(onClick = { /* Handle Register */ }) {

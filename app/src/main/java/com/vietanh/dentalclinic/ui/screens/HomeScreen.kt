@@ -11,7 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,12 +19,31 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vietanh.dentalclinic.controllers.UserController
+import com.vietanh.dentalclinic.data.SessionManager
 import com.vietanh.dentalclinic.navigation.Screen
 
 @Composable
 fun HomeScreen(
     onNavigate: (String) -> Unit
 ) {
+    var userName by remember { mutableStateOf("Đang tải...") }
+    val userController = remember { UserController() }
+
+    LaunchedEffect(Unit) {
+        val userId = SessionManager.currentUserId
+        if (userId != -1) {
+            val user = userController.getUserById(userId)
+            if (user != null) {
+                userName = user.fullname
+            } else {
+                userName = "Khách hàng"
+            }
+        } else {
+            userName = "Khách hàng"
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -50,7 +69,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text("Xin chào,", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Nguyễn Văn Khách", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(userName, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
             }
             IconButton(onClick = { /* Notifications */ }) {

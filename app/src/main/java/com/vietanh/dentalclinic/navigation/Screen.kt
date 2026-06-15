@@ -17,4 +17,9 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     // Other Screens
     object DoctorList : Screen("doctors", "Bác sĩ", null)
     object ServiceList : Screen("services", "Dịch vụ", null)
+    
+    // Profile Sub-screens
+    object EditProfile : Screen("edit_profile", "Sửa hồ sơ", null)
+    object PaymentHistory : Screen("payment_history", "Lịch sử thanh toán", null)
+    object TreatmentHistory : Screen("treatment_history", "Lịch sử điều trị", null)
 }

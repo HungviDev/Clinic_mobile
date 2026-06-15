@@ -1,6 +1,7 @@
 package com.vietanh.dentalclinic.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,7 +20,7 @@ import com.vietanh.dentalclinic.data.MockData
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ServiceListScreen(onBackClick: () -> Unit) {
+fun ServiceListScreen(onBackClick: () -> Unit, onServiceClick: (Int) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -41,7 +42,9 @@ fun ServiceListScreen(onBackClick: () -> Unit) {
         ) {
             items(MockData.services) { service ->
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onServiceClick(service.id) },
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

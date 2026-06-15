@@ -1,4 +1,4 @@
-﻿package com.vietanh.dentalclinic
+package com.vietanh.dentalclinic
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -86,8 +86,17 @@ fun MainApp(navController: NavHostController) {
             composable(Screen.Home.route) {
                 HomeScreen(onNavigate = { route -> navController.navigate(route) })
             }
-            composable(Screen.Booking.route) {
+            composable(
+                route = Screen.Booking.route + "?serviceId={serviceId}",
+                arguments = listOf(androidx.navigation.navArgument("serviceId") {
+                    type = androidx.navigation.NavType.IntType
+                    defaultValue = -1
+                })
+            ) { backStackEntry ->
+                val serviceIdArg = backStackEntry.arguments?.getInt("serviceId") ?: -1
+                val serviceId = if (serviceIdArg != -1) serviceIdArg else null
                 BookingScreen(
+                    serviceId = serviceId,
                     onBackClick = { navController.popBackStack() },
                     onBookingConfirm = { navController.navigate(Screen.Appointments.route) }
                 )
@@ -96,11 +105,25 @@ fun MainApp(navController: NavHostController) {
                 AppointmentsScreen()
             }
             composable(Screen.Profile.route) {
-                ProfileScreen(onLogout = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0)
-                    }
-                })
+                ProfileScreen(
+                    onLogout = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0)
+                        }
+                    },
+                    onNavigateToEditProfile = { navController.navigate(Screen.EditProfile.route) },
+                    onNavigateToPaymentHistory = { navController.navigate(Screen.PaymentHistory.route) },
+                    onNavigateToTreatmentHistory = { navController.navigate(Screen.TreatmentHistory.route) }
+                )
+            }
+            composable(Screen.EditProfile.route) {
+                EditProfileScreen(onBackClick = { navController.popBackStack() })
+            }
+            composable(Screen.PaymentHistory.route) {
+                PaymentHistoryScreen(onBackClick = { navController.popBackStack() })
+            }
+            composable(Screen.TreatmentHistory.route) {
+                TreatmentHistoryScreen(onBackClick = { navController.popBackStack() })
             }
             composable(Screen.DoctorList.route) {
                 DoctorListScreen(
@@ -109,7 +132,12 @@ fun MainApp(navController: NavHostController) {
                 )
             }
             composable(Screen.ServiceList.route) {
-                ServiceListScreen(onBackClick = { navController.popBackStack() })
+                ServiceListScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onServiceClick = { serviceId ->
+                        navController.navigate("${Screen.Booking.route}?serviceId=$serviceId")
+                    }
+                )
             }
         }
     }
