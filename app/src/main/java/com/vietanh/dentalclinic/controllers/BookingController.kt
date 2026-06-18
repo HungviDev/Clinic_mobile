@@ -63,16 +63,20 @@ class BookingController {
 
     suspend fun sendMail(to: String, doctorName: String, patientName: String, appointmentDate: String) = withContext(Dispatchers.IO) {
         if (to.isBlank()) return@withContext
+        val targetIp = "10.0.2.2" // Sử dụng 10.0.2.2 cho máy ảo Android Emulator để kết nối đến localhost của máy tính
+        val port = "3000"
         try {
-            // Sử dụng 10.0.2.2 để Emulator có thể gọi đến localhost của máy tính
-            val url = java.net.URL("http://localhost:3000/send-mail")
+            val url = java.net.URL("http://$targetIp:$port/send-mail")
+            Log.d("BookingController", "Đang gửi mail tới: $url")
             val conn = url.openConnection() as java.net.HttpURLConnection
             conn.requestMethod = "POST"
-            conn.setRequestProperty("Content-Type", "application/json; utf-8")
+            conn.setRequestProperty("Content-Type", "application/json")
             conn.setRequestProperty("Accept", "application/json")
+            conn.connectTimeout = 5000 // 5 seconds
+            conn.readTimeout = 5000
             conn.doOutput = true
 
-            // Escape chuỗi nếu cần để tránh lỗi JSON, tuy nhiên ở đây giả định tên không chứa ký tự đặc biệt break JSON
+            // Tạo chuỗi JSON theo đúng format yêu cầu
             val jsonInputString = """
             {
                 "to": "$to",
@@ -88,7 +92,21 @@ class BookingController {
             }
 
             val responseCode = conn.responseCode
-            Log.d("BookingController", "Send mail response code: $responseCode")
+            Log.d("BookingController", "Gửi mail phản hồi từ server: $responseCode")
+            
+            // Đọc phản hồi để đảm bảo request được thực hiện trọn vẹn
+            val responseText = if (responseCode in 200..299) {
+                conn.inputStream.bufferedReader().use { it.readText() }
+            } else {
+                conn.errorStream?.bufferedReader()?.use { it.readText() } ?: "No error message"
+            }
+            Log.d("BookingController", "Chi tiết phản hồi: $responseText")
+            
+            conn.disconnect()
+        } catch (e: java.net.ConnectException) {
+            Log.e("BookingController", "Không thể kết nối đến server Node.js ($targetIp:$port). " +
+                    "Nếu dùng máy ảo Emulator, hãy chắc chắn Node.js đang chạy trên cổng $port của máy tính. " +
+                    "Nếu dùng điện thoại thật, hãy thay '$targetIp' bằng IP WiFi của máy tính (ví dụ 192.168.1.X).", e)
         } catch (e: Exception) {
             Log.e("BookingController", "Lỗi gửi mail: " + e.message, e)
         }
